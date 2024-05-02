@@ -1,0 +1,67 @@
+function c = getcontour(x, height_letters, width_letters, mean_height)
+
+    %Turning the image into binary
+    x = imbinarize(x);
+
+    %Taking the complement of the binary image
+    x = imcomplement(x);
+    
+    %Calculating the mean width of the letters and then using the heights
+    %according to each case presented
+    mean_width_letters = ceil(mean(width_letters));
+    heights_sorted = unique(nonzeros(height_letters));
+
+    %Not taking the max and min exactly due to single outliers messing with
+    %the min and max values, such as "," being the min and downgrading all
+    %the lowercase "short" letters
+    max_height_letters = heights_sorted(end-5);
+    min_height_letters = heights_sorted(5);
+    
+    %resizing the letter to match the desired dimensions for comparison
+    %reasons. Used mostly to scale the testset with the training set to
+    %eliminate any false predictions due to size incompatibility
+    %we also use a ratio to further increase the letter image's details before
+    %extracting its contours
+    if size(x, 1) > mean_height
+        x = imresize(x, [1.25*max_height_letters 1.25*mean_width_letters] , "bilinear");
+    else
+        x = imresize(x, [1.25*min_height_letters 1.25*mean_width_letters] , "bilinear");
+    end
+    
+    %structural element used
+    se = strel('disk',1);
+
+    %image after dilation
+    img_dilated = imdilate(x,se);
+
+    %image after erosion
+    img_eroded = imerode(x, se);
+
+    %Subtracting the above and getting a somewhat contour
+    contours = img_dilated - img_eroded;
+
+    %Thinning the contour as much as possible. We ideally want the contour
+    %thickness to be 1
+    contours = bwmorph(contours, 'thin', Inf);
+
+    %Labeling the contours, if they are more than one, to be able to
+    %extract and store them separately
+    L = bwlabel(contours);
+    c = cell(0);
+    i = 1;
+    while (true) 
+        [rows, cols] = find(L == i);
+        if length(rows) < 5
+            i = i + 1;
+        end
+        c{i} = [rows, cols];
+        i = i + 1;
+        if size(find(L == i), 1) == 0
+            break;
+        end
+    end
+
+
+
+    
+end
