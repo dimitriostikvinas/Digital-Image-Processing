@@ -1,0 +1,20 @@
+function H = findHomography(points1, points2, points3)
+%points1 : first pair
+%points2 : second pair
+    point1 = points1(1, :)';
+    point2 = points1(2, :)';
+    point3 = points2(1, :)';
+    point4 = points2(2, :)';
+    point5 = points3(1, :)';
+    point6 = points3(2, :)';
+    
+    % B = xA => x = B * inv(A)
+    A = [[point1 ; 1 ] , [point3 ; 1], [point5 ; 1]];
+    B = [[point2 ; 1], [point4 ; 1], [point6 ; 1]];
+    
+    x = B * inv(A);
+
+    T = fitgeotform2d(points2,points1,"similarity");
+    disp(H)
+    disp(T.A)
+end

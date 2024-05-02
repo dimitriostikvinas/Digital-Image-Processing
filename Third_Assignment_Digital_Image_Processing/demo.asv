@@ -1,0 +1,60 @@
+
+
+img_1 = im2gray(imread('segment_1.jpg'));
+img_2 = im2gray(imread('segment_2.jpg'));
+img_3 = im2gray(imread('segment_3.jpg'));
+%img = checkerboard;
+%img = imread('im1.png');
+%Turning the original image into grayscale
+
+%Angle in quadrant 1
+theta_1 = 1; %deg
+%Angle in quadrant 3
+theta_2 = 175; %deg
+I = img_1;
+
+%Counterclockwise rotation
+I_1 = imrotate(I, theta_1, "bilinear");
+I_2 = imrotate(I, theta_2, "bilinear");
+
+p = [100, 100];
+p_1 = NewPixelCoordinatesAfterRotation(I,p,theta_1);
+p_2 = NewPixelCoordinatesAfterRotation(I,p,theta_2);
+
+rhom = 5;
+rhoM = 20;
+rhostep = 1;
+N = 8;
+
+d = myLocalDescriptor(I,p,rhom,rhoM,rhostep ,N);
+d_1 = myLocalDescriptor(I_1,p_1,rhom,rhoM,rhostep ,N);
+d_2 = myLocalDescriptor(I_2,p_2,rhom,rhoM,rhostep ,N);
+
+d_upgrade = myLocalDescriptorUpgrade(I,p,rhom,rhoM,rhostep ,N);
+
+d_upgrade_1 = myLocalDescriptorUpgrade(I_1,p_1,rhom,rhoM,rhostep ,N);
+d_upgrade_2 = myLocalDescriptorUpgrade(I_2,p_2,rhom,rhoM,rhostep ,N);
+
+corners_mine = myDetectHarrisFeatures(I);
+
+% Using built-in MATLAB Harris algorithm for reference and evaluation of 
+% ours 
+corners=detectHarrisFeatures(I);
+
+corners_1 = myDetectHarrisFeatures(img_1);
+corners_2 = myDetectHarrisFeatures(img_2);
+corners_3 = myDetectHarrisFeatures(img_3);
+
+features_1 = PointsDescriptors(corners_1 , img_1 ,rhom,rhoM,rhostep ,N);
+features_2 = PointsDescriptors(corners_2 , img_2 ,rhom,rhoM,rhostep ,N);
+features_3 = PointsDescriptors(corners_3 , img_3 ,rhom,rhoM,rhostep ,N);
+
+percentageThreshold = 0.3;
+
+matchingPoints_1= descriptorMatching(...
+    features_1, features_2, percentageThreshold);
+
+matchingPoints_2 = descriptorMatching(...
+    features_2, features_3, percentageThreshold);
+
+H = findHomography([corners_2(1, :); corners_2(1, :)], [corners_3(1, :); corners_3(1, :)]);
